@@ -1,0 +1,31 @@
+name: patho_bench
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - ipywidgets
+  - pytorch  # torch wird als pytorch in conda geführt
+  - transformers
+  - tqdm
+  - threadpoolctl # from requirements.txt
+  - scikit-learn # from requirements.txt
+  - scikit-survival # from requirements.txt
+  - lovely-tensors # from requirements.txt
+  - seaborn # from requirements.txt
+  - datasets==3.6.0 # from requirements.txt
+  - h5py
+  - matplotlib
+  - segmentation-models-pytorch
+  - opencv
+  - openslide
+  - openslide-python
+  - pillow
+  - timm=0.9.16
+  - geopandas
+  - huggingface_hub
+  - scipy
+  - pip
+  - pip:
+      - einops_exts
+      - pyisyntax
