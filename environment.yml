@@ -26,6 +26,8 @@ dependencies:
   - huggingface_hub
   - scipy
   - pip
+  - environs==11.0.0 # prism dependency
   - pip:
       - einops_exts
       - pyisyntax
+      - sacremoses==0.1.1 # prism dependency
