@@ -23,7 +23,7 @@ COMBINE_TRAIN_VAL = False
 TEST_EXTERNAL_ONLY = True
 
 class ExperimentFactory:
-                
+    
     @staticmethod
     def linprobe(
                  split: str,
@@ -40,10 +40,10 @@ class ExperimentFactory:
                  patch_embeddings_dirs: list[str] = None,
                  model_name: str = None,
                  model_kwargs: dict = {},
-                 num_bootstraps: int = 100): 
+                 num_bootstraps: int = 100):
         '''
         Create linear probe experiment using slide-level embeddings.
-        
+
         Args:
             split: str, path to local split file.
             task_config: str, path to task config file.
@@ -71,7 +71,7 @@ class ExperimentFactory:
                                                                                     model_name=model_name,
                                                                                     model_kwargs=model_kwargs,
                                                                                     gpu=gpu)
-        
+
         # Initialize experiment
         experiment = LinearProbeExperiment(
             dataset=internal_dataset,
@@ -96,7 +96,7 @@ class ExperimentFactory:
                 test_external_only=TEST_EXTERNAL_ONLY,
                 saveto=external_saveto
             )
-    
+
     @staticmethod
     def retrieval(
                  split: str,
@@ -113,10 +113,10 @@ class ExperimentFactory:
                  patch_embeddings_dirs: list[str] = None,
                  model_name: str = None,
                  model_kwargs: dict = {},
-                 num_bootstraps: int = 100): 
+                 num_bootstraps: int = 100):
         '''
         Create retrieval experiment using slide-level embeddings.
-        
+
         Args:
             split: str, path to local split file.
             task_config: str, path to task config file.
@@ -144,7 +144,7 @@ class ExperimentFactory:
                                                                                     model_name,
                                                                                     model_kwargs,
                                                                                     gpu)
-        
+
         # Initialize experiment
         experiment = RetrievalExperiment(
             dataset=internal_dataset,
@@ -169,7 +169,7 @@ class ExperimentFactory:
                 test_external_only=TEST_EXTERNAL_ONLY,
                 saveto=external_saveto
             )
-    
+
     @staticmethod
     def coxnet(split: str,
                task_config: str,
@@ -188,7 +188,7 @@ class ExperimentFactory:
                num_bootstraps: int=100):
         '''
         Create CoxNet experiment using slide-level embeddings.
-        
+
         Args:
             split: str, path to local split file.
             task_config: str, path to task config file.
@@ -216,7 +216,7 @@ class ExperimentFactory:
                                                                                     model_name,
                                                                                     model_kwargs,
                                                                                     gpu)
-        
+
         # Initialize experiment
         experiment = CoxNetExperiment(
             dataset=internal_dataset,
@@ -274,7 +274,7 @@ class ExperimentFactory:
             saveto: str, path to save the results
             combine_slides_per_patient: bool, Whether to combine patches from multiple slides when pooling at case_id level. If False, will pool each slide independently.
             model_name: str, name of the model to use for pooling. Only needed if pooled_embeddings_dir is empty.
-            
+
             bag_size: int or None, number of patches per bag
             base_learning_rate: float or None, base learning rate
             gradient_accumulation: int or None, gradient accumulation steps
@@ -293,7 +293,7 @@ class ExperimentFactory:
             num_bootstraps: int, number of bootstraps. Default is 100.
         '''
         assert batch_size == 1, 'Only batch_size = 1 is supported for finetuning for now'
-        
+
         ###### Get dataset ################################################################
         split, task_info, internal_dataset = ExperimentFactory._prepare_internal_dataset(split,
                                                                                     task_config,
@@ -302,7 +302,7 @@ class ExperimentFactory:
                                                                                     COMBINE_TRAIN_VAL,
                                                                                     patch_embeddings_dirs,
                                                                                     bag_size = bag_size)
-        
+
         task_name = task_info['task_col']
 
         ###### Get loss ################################################################
@@ -314,10 +314,10 @@ class ExperimentFactory:
             loss = {fold: nn.CrossEntropyLoss(weight = torch.from_numpy(weights).float()) for fold, weights in fold_weights.items()}
         else:
             loss = nn.CrossEntropyLoss()
-        
+
         ###### Configure model ################################################################
         model_name_clean = model_name.replace("-randominit", "")
-        slide_encoder = encoder_factory(model_name_clean, pretrained = False if 'randominit' in model_name or model_name.startswith('abmil') else True, freeze=False, **model_kwargs)
+        slide_encoder = encoder_factory(model_name_clean, freeze=False, **model_kwargs)
 
         model_kwargs = {
                         'slide_encoder': slide_encoder,
@@ -357,7 +357,7 @@ class ExperimentFactory:
                                 'weight_decay': weight_decay}
         else:
             raise NotImplementedError(f'Optimizer type {optimizer_type} not yet implemented. Please choose from "AdamW" or "gigapath".')
-        
+
         ###### Configure experiment ################################################################
         experiment = FinetuningExperiment(
             task_type = task_info['task_type'],
@@ -375,7 +375,7 @@ class ExperimentFactory:
             device = f'cuda:{gpu if gpu != -1 else GPUManager.get_best_gpu(min_mb=500)}',
             results_dir = saveto
         )
-        
+
         if external_split is None:
             return experiment
         else:
@@ -393,7 +393,7 @@ class ExperimentFactory:
                 test_external_only=TEST_EXTERNAL_ONLY,
                 saveto=external_saveto
             )
-    
+
     @staticmethod
     def sweep(experiment_type: str,
               split: str,
@@ -443,14 +443,14 @@ class ExperimentFactory:
             'external_split': external_split,
             'external_pooled_embeddings_dir': external_pooled_embeddings_dir,
             'external_saveto': external_saveto,
-            'num_bootstraps': num_bootstraps            
+            'num_bootstraps': num_bootstraps
         }
 
         # Iterate over all combinations of hyperparameters.
         for hyperparams in generate_arg_combinations(sweep_over):
             # Create a unique experiment directory from the hyperparameters.
             args['saveto'] = os.path.join(saveto_root, f'{model_name}_{experiment_type}', generate_exp_id(hyperparams))
-            
+
             if experiment_type == 'finetune':
                 args.pop('pooled_embeddings_dir') # Finetune does not use pooled embeddings
                 args.pop('external_pooled_embeddings_dir') # Finetune does not use pooled embeddings
@@ -469,7 +469,7 @@ class ExperimentFactory:
             experiment.train()
             experiment.test()
 
-            
+
     @staticmethod
     def _prepare_internal_dataset(split_path: str,
                                   task_config: str,
@@ -490,7 +490,7 @@ class ExperimentFactory:
         if combine_train_val:
             split.replace_folds('val', 'train')
         split.save(os.path.join(saveto, 'split.csv'), row_divisor='slide_id')  # Save split to experiment folder for future reference
-        
+
         # Load dataset
         if pooled_embeddings_dir is not None:
             dataset = DatasetFactory.from_slide_embeddings(
@@ -530,7 +530,7 @@ class ExperimentFactory:
         external_split, task_info = SplitFactory.from_local(external_split_path, task_config)
         external_split.remove_all_folds()
         external_split.assign_folds(num_folds=internal_num_folds, test_frac=1, val_frac=0, method='monte-carlo')  # Reassign all samples to test
-        
+
         if external_pooled_embeddings_dir is not None:
             return DatasetFactory.from_slide_embeddings(
                 split=external_split,
@@ -553,14 +553,14 @@ class ExperimentFactory:
 
 ############################################################################################################
 # Some helper functions
-        
+
 def parse_task_code(task_code):
     '''
     Parse task code into data source and task name.
-    
+
     Args:
         task_code: str, in the format "data_source--task_name"
-    
+
     Returns:
         str, str, str: train_source, test_source, task_name
     '''
@@ -568,31 +568,31 @@ def parse_task_code(task_code):
     if '==' in data_source:
         train_source, test_source = data_source.split('==') # If running generalizability experiment, load split for internal dataset only
         assert train_source != test_source, f'train_source and test_source must be different when formatting task_code as "train_source==test_source--task_name". Did you mean to use {train_source}--{task_name} instead of {task_code}?'
-        return train_source, test_source, task_name     
+        return train_source, test_source, task_name
     else:
         train_source = data_source
         return train_source, None, task_name
-    
+
 def generate_exp_id(hyperparams):
     '''
     Generate a unique experiment ID from a dictionary of hyperparameters.
-    
+
     Args:
         hyperparams: dict, hyperparameters
-    
+
     Returns:
         str: experiment ID
     '''
     return '_'.join(sorted([f'{k}={v}' for k, v in hyperparams.items()]))
-    
+
 def generate_arg_combinations(variables):
     """
     Given a dict of lists, generate a list of dicts with all possible combinations of the input lists.
     Example: {"blr": [0.01, 0.1], "wd": [0.001, 0.01]} -> [{"blr": 0.01, "wd": 0.001}, {"blr": 0.01, "wd": 0.01}, {"blr": 0.1, "wd": 0.001}, {"blr": 0.1, "wd": 0.01}]
-    
+
     Parameters:
     - variables (dict[list]): A dictionary where the keys are the variable names and the values are lists of values.
-    
+
     Returns:
     - list[dict]: A list of dictionaries, each representing a combination of the input variables.
     """
@@ -601,10 +601,10 @@ def generate_arg_combinations(variables):
     if 'auto' in make_list(variables.get('COST')):
         assert len(make_list(variables['COST'])) == 1, f'If setting cost to "auto", then only one cost value is allowed. Received {make_list(variables["COST"])}'
         variables['cost'] = list(np.logspace(np.log10(10e-6), np.log10(10e5), num=45))
-        
+
     variables = {k.lower(): make_list(v) for k, v in variables.items()} # Ensure all values are lists and convert keys are lowercase
     return [dict(zip(variables.keys(), combination)) for combination in product(*variables.values())]
-        
+
 def make_list(x):
     '''
     Convert input to list if it is not already a list.
